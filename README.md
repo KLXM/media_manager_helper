@@ -10,19 +10,11 @@ Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddO
 - Debug-Möglichkeiten für verfügbare Effekte
 - Automatische Bereinigung bei AddOn-Deinstallation (optional)
 
-## Installation
 
-Die Klasse in das `lib/` Verzeichnis deines AddOns kopieren:
-
-```
-mein_addon/
-  lib/
-    MediaManagerHelper.php
-```
 
 ## Einfache Verwendung
 
-### In der install.php
+### In der install.php des eigenen AddOns
 
 ```php
 $mm = MediaManagerHelper::factory();
@@ -39,6 +31,7 @@ $mm->addType('mein_thumb', 'Thumbnail für mein AddOn')
 ### In der uninstall.php
 
 ```php
+$mm = MediaManagerHelper::factory();
 $mm->addType('mein_thumb')->uninstall();
 ```
 
