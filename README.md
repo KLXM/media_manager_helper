@@ -1,4 +1,4 @@
-# MediaManagerHelper
+# MediaManagerHelper (WIP)
 
 Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddOns zu verwalten.
 
