@@ -257,8 +257,9 @@ array:15 [
     10 => "image_properties"
     11 => "insert_image"
     12 => "mediapath"
-    13 => "resize"
-    14 => "workspace"
+    13 => "klxm_mediaporxy"
+    14 => "resize"
+    15 => "workspace"
 ]
 */
 ```
