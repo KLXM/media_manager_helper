@@ -9,9 +9,79 @@ Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddO
 - Validierung von Effekten und Parametern
 - Debug-Möglichkeiten für verfügbare Effekte
 - Import/Export von Medientypen als JSON
-- Automatische Bereinigung bei AddOn-Deinstallation (optional)
+- Automatische Bereinigung bei AddOn-Deinstallation
 
-[Bisheriger Inhalt bis zu den Beispielen...]
+## Einfache Verwendung
+
+### In der install.php des eigenen AddOns
+
+```php
+$mm = MediaManagerHelper::factory();
+
+// Einfachen Thumbnail erstellen
+$mm->addType('mein_thumb', 'Thumbnail für mein AddOn')
+   ->addEffect('mein_thumb', 'resize', [
+       'width' => 500,
+       'height' => 500
+   ])
+   ->install();
+```
+
+### In der uninstall.php
+
+```php
+$mm = MediaManagerHelper::factory();
+$mm->addType('mein_thumb')->uninstall();
+```
+
+## Erweiterte Beispiele
+
+### Focuspoint_fit mit Resize 
+
+```php
+$mm = MediaManagerHelper::factory();
+$mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
+    // Zuerst auf max 2000px bringen
+    ->addEffect('quadrat_fokus', 'resize', [
+        'width' => 2000,
+        'height' => 2000,
+        'style' => 'maximum',
+        'allow_enlarge' => 'not_enlarge'
+    ], 1)
+    // Dann quadratisch zuschneiden mit Fokuspunkt
+    ->addEffect('quadrat_fokus', 'focuspoint_fit', [
+        'width' => '1fr',     
+        'height' => '1fr',    
+        'zoom' => '0',       
+        'meta' => 'med_focuspoint',
+        'focus' => '50.0,50.0'  // Fallback Fokuspunkt in der Mitte (x,y)
+    ], 2)
+    ->install();
+```
+
+### Mehrere Effekte kombinieren
+
+```php
+$mm = MediaManagerHelper::factory();
+
+$mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
+    // Erst resize
+    ->addEffect('quadrat_fokus', 'resize', [
+        'width' => 2000,
+        'height' => 2000,
+        'style' => 'maximum',
+        'allow_enlarge' => 'not_enlarge'
+    ], 1)
+    // Dann mit Fokuspunkt zuschneiden
+    ->addEffect('quadrat_fokus', 'focuspoint_fit', [
+        'width' => '1fr',     
+        'height' => '1fr',    
+        'zoom' => '0',       
+        'meta' => 'med_focuspoint',
+        'focus' => '50.0,50.0'
+    ], 2)
+    ->install();
+```
 
 ## Import und Export
 
@@ -75,165 +145,97 @@ Beispiel JSON-Datei (`media_types.json`):
 ]
 ```
 
-## API
-
-### Hauptmethoden
-
-```php
-// Typ hinzufügen
-addType(string $name, string $description = '')
-
-// Effekt hinzufügen
-addEffect(string $type, string $effect, array $params = [], int $priority = 1)
-
-// Installation durchführen
-install()
-
-// Deinstallation durchführen
-uninstall()
-
-// Typen bei Deinstallation behalten
-keepTypesOnUninstall()
-
-// Export Methoden
-exportToJson(?array $typeNames = null, ?string $file = null, bool $prettyPrint = true, bool $includeSystemTypes = false)
-exportToFile(string $file, ?array $typeNames = null, bool $prettyPrint = true, bool $includeSystemTypes = false)
-
-// Import Methoden
-importFromJson(string $jsonFile)
-```
-
-[Rest der bestehenden Readme...]
-
-## Installation
-
-Die Klasse in das `lib/` Verzeichnis deines AddOns kopieren:
-
-```
-mein_addon/
-  lib/
-    MediaManagerHelper.php
-```
-
-## Einfache Verwendung
-
-### In der install.php
-
-```php
-$mm = MediaManagerHelper::factory();
-
-// Einfachen Thumbnail erstellen
-$mm->addType('mein_thumb', 'Thumbnail für mein AddOn')
-   ->addEffect('mein_thumb', 'resize', [
-       'width' => 500,
-       'height' => 500
-   ])
-   ->install();
-```
-
-### In der uninstall.php
-
-```php
-$mm->addType('mein_thumb')->uninstall();
-```
-
-## Erweiterte Beispiele
-
-### Mehrere Effekte kombinieren
-
-```php
-$mm = MediaManagerHelper::factory();
-
-$mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
-    // Erst resize
-    ->addEffect('quadrat_fokus', 'resize', [
-        'width' => 2000,
-        'height' => 2000,
-        'style' => 'maximum',
-        'allow_enlarge' => 'not_enlarge'
-    ], 1)
-    // Dann mit Fokuspunkt zuschneiden
-    ->addEffect('quadrat_fokus', 'focuspoint_fit', [
-        'width' => '1fr',     
-        'height' => '1fr',    
-        'zoom' => '0',       
-        'meta' => 'med_focuspoint',
-        'focus' => '50.0,50.0'
-    ], 2)
-    ->install();
-```
-
-### Typen bei Deinstallation behalten
-
-```php
-$mm->keepTypesOnUninstall()->uninstall();
-```
-
 ## Debug-Funktionen
-
-### Verfügbare Effekte anzeigen
-
-```php
-$mm = MediaManagerHelper::factory();
-
-// Alle Effekte anzeigen
-$mm->listAvailableEffects();
-
-// Als Array zurückgeben statt dumpen
-$effects = $mm->listAvailableEffects(false);
-```
 
 ### Parameter eines Effekts anzeigen
 
 ```php
 // Parameter eines Effekts anzeigen
-$mm->showEffectParams('resize');
+$mm = MediaManagerHelper::factory();
+$mm->showEffectParams('focuspoint_fit');
 
-// Parameter als Array zurückgeben
-$params = $mm->showEffectParams('resize', false);
+/* Ausgabe:
+array:3 [
+    "name" => "focuspoint_fit"
+    "class" => "rex_effect_focuspoint_fit"
+    "params" => array:5 [
+        "meta" => array:4 [
+            "type" => "select"
+            "default" => "med_focuspoint"
+            "options" => array:2 [
+                12 => "med_focuspoint"
+                13 => "default => Koordinate / Ersatzwert"
+            ]
+            "notice" => null
+        ]
+        "focus" => array:4 [
+            "type" => "string"
+            "default" => null
+            "options" => null
+            "notice" => "x,y: 0.0,0.0 ... 100.0,100.0"
+        ]
+        "width" => array:4 [
+            "type" => "int"
+            "default" => null
+            "options" => null
+            "notice" => "absolut: n [px] | relativ: n % | Aspect-Ratio: n fr"
+        ]
+        "height" => array:4 [
+            "type" => "int"
+            "default" => null
+            "options" => null
+            "notice" => "absolut: n [px] | relativ: n % | Aspect-Ratio: n fr"
+        ]
+        "zoom" => array:4 [
+            "type" => "select"
+            "default" => null
+            "options" => array:5 []
+            "notice" => "0% = Zielgröße (kein Zoom) ... 100% = Ausschnitt größtmöglich wählen"
+        ]
+    ]
+]
+*/
+
+// Aus dieser Debug-Ausgabe können wir dann den entsprechenden Effekt mit den richtigen Parametern bauen:
+$mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
+    ->addEffect('quadrat_fokus', 'focuspoint_fit', [
+        'width' => '1fr',     // Aus notice: "Aspect-Ratio: n fr"
+        'height' => '1fr',    // Gleiches Seitenverhältnis für Quadrat
+        'zoom' => '0',        // Aus notice: "0% = Zielgröße"
+        'meta' => 'med_focuspoint', // Aus options
+        'focus' => '50.0,50.0'  // Aus notice: "x,y: 0.0,0.0 ... 100.0,100.0"
+    ])
+    ->install();
 ```
 
-## API
-
-### Hauptmethoden
+### Alle verfügbaren Effekte anzeigen
 
 ```php
-// Typ hinzufügen
-addType(string $name, string $description = '')
+$mm = MediaManagerHelper::factory();
+$mm->listAvailableEffects();
 
-// Effekt hinzufügen
-addEffect(string $type, string $effect, array $params = [], int $priority = 1)
-
-// Installation durchführen
-install()
-
-// Deinstallation durchführen
-uninstall()
-
-// Typen bei Deinstallation behalten
-keepTypesOnUninstall()
+/* Ausgabe z.B.:
+array:15 [
+    0 => "convert2img"
+    1 => "crop"
+    2 => "filter_blur"
+    3 => "filter_brightness"
+    4 => "filter_contrast"
+    5 => "filter_sharpen"
+    6 => "flip"
+    7 => "focuspoint_fit"
+    8 => "header"
+    9 => "image_format"
+    10 => "image_properties"
+    11 => "insert_image"
+    12 => "mediapath"
+    13 => "resize"
+    14 => "workspace"
+]
+*/
 ```
 
-### Debug-Methoden
-
-```php
-// Verfügbare Effekte auflisten
-listAvailableEffects(bool $dump = true)
-
-// Parameter eines Effekts anzeigen
-showEffectParams(string $effect, bool $dump = true)
-```
-
-## Fehlerbehandlung
-
-Die Klasse prüft automatisch:
-- Ob ein Effekt verfügbar ist
-- Ob die angegebenen Parameter gültig sind
-- Ob der Media Manager verfügbar ist
-
-Bei Fehlern wird eine `rex_exception` geworfen.
-
-## Beispiele für gängige Anwendungsfälle
+## Häufige Anwendungsfälle
 
 ### Thumbnail mit maximaler Größe
 
@@ -281,6 +283,15 @@ $mm->addType('watermark', 'Bild mit Wasserzeichen')
        'padding_y' => -20
    ], 2);
 ```
+
+## Fehlerbehandlung
+
+Die Klasse prüft automatisch:
+- Ob ein Effekt verfügbar ist
+- Ob die angegebenen Parameter gültig sind
+- Ob der Media Manager verfügbar ist
+
+Bei Fehlern wird eine `rex_exception` geworfen.
 
 ## Lizenz
 
