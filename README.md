@@ -1,4 +1,4 @@
-# MediaManagerHelper (WIP)
+# MediaManagerHelper
 
 Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddOns zu verwalten.
 
@@ -8,13 +8,116 @@ Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddO
 - Automatisches Update bestehender Typen
 - Validierung von Effekten und Parametern
 - Debug-Möglichkeiten für verfügbare Effekte
+- Import/Export von Medientypen als JSON
 - Automatische Bereinigung bei AddOn-Deinstallation (optional)
 
+[Bisheriger Inhalt bis zu den Beispielen...]
 
+## Import und Export
+
+### Media Types als JSON exportieren
+
+```php
+$mm = MediaManagerHelper::factory();
+
+// Alle Custom-Typen exportieren (ohne System-Typen)
+$json = $mm->exportToJson();
+
+// Nur bestimmte Typen exportieren
+$json = $mm->exportToJson(['mein_typ', 'mein_anderer_typ']);
+
+// Direkt in Datei speichern
+$mm->exportToJson(
+    ['mein_typ'], // typen
+    'media_types.json', // datei
+    true, // pretty print
+    false // keine system typen
+);
+
+// Alternative Methode für Datei-Export
+$success = $mm->exportToFile(
+    'media_types.json',
+    ['mein_typ']
+);
+```
+
+### Media Types aus JSON importieren
+
+```php
+// In der install.php:
+$mm = MediaManagerHelper::factory();
+
+// Typen aus JSON-Datei importieren und installieren
+$mm->importFromJson($this->getPath('media_types.json'))
+   ->install();
+```
+
+Beispiel JSON-Datei (`media_types.json`):
+```json
+[
+    {
+        "name": "mein_typ",
+        "description": "Mein Media Manager Typ",
+        "effects": {
+            "1": {
+                "effect": "resize",
+                "params": {
+                    "rex_effect_resize": {
+                        "width": 800,
+                        "height": 600,
+                        "style": "maximum",
+                        "allow_enlarge": "not_enlarge"
+                    }
+                }
+            }
+        }
+    }
+]
+```
+
+## API
+
+### Hauptmethoden
+
+```php
+// Typ hinzufügen
+addType(string $name, string $description = '')
+
+// Effekt hinzufügen
+addEffect(string $type, string $effect, array $params = [], int $priority = 1)
+
+// Installation durchführen
+install()
+
+// Deinstallation durchführen
+uninstall()
+
+// Typen bei Deinstallation behalten
+keepTypesOnUninstall()
+
+// Export Methoden
+exportToJson(?array $typeNames = null, ?string $file = null, bool $prettyPrint = true, bool $includeSystemTypes = false)
+exportToFile(string $file, ?array $typeNames = null, bool $prettyPrint = true, bool $includeSystemTypes = false)
+
+// Import Methoden
+importFromJson(string $jsonFile)
+```
+
+[Rest der bestehenden Readme...]
+
+## Installation
+
+Die Klasse in das `lib/` Verzeichnis deines AddOns kopieren:
+
+```
+mein_addon/
+  lib/
+    MediaManagerHelper.php
+```
 
 ## Einfache Verwendung
 
-### In der install.php des eigenen AddOns
+### In der install.php
 
 ```php
 $mm = MediaManagerHelper::factory();
@@ -31,7 +134,6 @@ $mm->addType('mein_thumb', 'Thumbnail für mein AddOn')
 ### In der uninstall.php
 
 ```php
-$mm = MediaManagerHelper::factory();
 $mm->addType('mein_thumb')->uninstall();
 ```
 
@@ -60,31 +162,6 @@ $mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
     ], 2)
     ->install();
 ```
-
-### Focuspoint_fit mit Resize 
-
-```php
-$mm = MediaManagerHelper::factory();
-$mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
-    // Zuerst auf max 2000px bringen
-    ->addEffect('quadrat_fokus', 'resize', [
-        'width' => 2000,
-        'height' => 2000,
-        'style' => 'maximum',
-        'allow_enlarge' => 'not_enlarge'
-    ], 1)
-    // Dann quadratisch zuschneiden mit Fokuspunkt
-    ->addEffect('quadrat_fokus', 'focuspoint_fit', [
-        'width' => '1fr',     
-        'height' => '1fr',    
-        'zoom' => '0',       
-        'meta' => 'med_focuspoint',
-        'focus' => '50.0,50.0'  // Fallback Fokuspunkt in der Mitte (x,y)
-    ], 2)
-    ->install();
-
-```
-
 
 ### Typen bei Deinstallation behalten
 
