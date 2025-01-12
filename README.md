@@ -270,6 +270,144 @@ Die Klasse prüft automatisch:
 
 Bei Fehlern wird eine `rex_exception` geworfen.
 
+
+## MediaManagerHelper - API Dokumentation
+
+### Factory Methode
+
+```php
+public static function factory(): self
+```
+Erstellt eine neue Instanz der Helper-Klasse.
+
+```php
+$mm = MediaManagerHelper::factory();
+```
+
+### Media Type Methoden
+
+```php
+public function addType(string $name, string $description = ''): self
+```
+Fügt einen neuen Media Manager Typ hinzu.
+
+```php
+$mm->addType('mein_typ', 'Meine Bildbearbeitung');
+```
+
+```php
+public function addEffect(
+    string $type, 
+    string $effect, 
+    array $params = [], 
+    int $priority = 1
+): self
+```
+Fügt einem Typ einen Effekt hinzu. Die Priorität bestimmt die Ausführungsreihenfolge.
+
+```php
+$mm->addEffect('mein_typ', 'resize', [
+    'width' => 500,
+    'height' => 500
+]);
+```
+
+```php
+public function install(): void
+```
+Installiert oder aktualisiert alle konfigurierten Typen.
+
+```php
+$mm->install();
+```
+
+```php
+public function uninstall(): void
+```
+Deinstalliert die angegebenen Typen.
+
+```php
+$mm->addType('mein_typ')->uninstall();
+```
+
+### Import/Export Methoden
+
+```php
+public function exportToJson(
+    ?array $typeNames = null,
+    ?string $file = null,
+    bool $prettyPrint = true,
+    bool $includeSystemTypes = false
+): string
+```
+Exportiert Media Manager Typen als JSON.
+
+```php
+// Alle Custom-Typen exportieren
+$json = $mm->exportToJson();
+
+// Bestimmte Typen in Datei exportieren
+$mm->exportToJson(['mein_typ'], 'media_types.json');
+```
+
+```php
+public function importFromJson(string $jsonFile): self
+```
+Importiert Media Manager Typen aus einer JSON-Datei.
+
+```php
+$mm->importFromJson($this->getPath('media_types.json'))->install();
+```
+
+### Debug Methoden
+
+```php
+public function showEffectParams(string $effect, bool $dump = true): ?array
+```
+Zeigt die verfügbaren Parameter eines Effekts an.
+
+```php
+// Parameter eines beliebigen Effekts anzeigen
+$mm->showEffectParams('resize');
+```
+
+```php
+public function listAvailableEffects(bool $dump = true): ?array
+```
+Listet alle verfügbaren Effekte auf.
+
+```php
+// Alle Effekte anzeigen
+$mm->listAvailableEffects();
+
+// Als Array zurückgeben
+$effects = $mm->listAvailableEffects(false);
+```
+
+### JSON Format
+
+Format für Import/Export:
+```json
+[
+    {
+        "name": "mein_typ",
+        "description": "Beschreibung",
+        "effects": {
+            "1": {
+                "effect": "resize",
+                "params": {
+                    "rex_effect_resize": {
+                        "width": 800,
+                        "height": 600
+                    }
+                }
+            }
+        }
+    }
+]
+```
+
+
 ## Lizenz
 
 MIT
