@@ -61,6 +61,31 @@ $mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
     ->install();
 ```
 
+### Focuspoint_fit mit Resize 
+
+```php
+$mm = MediaManagerHelper::factory();
+$mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
+    // Zuerst auf max 2000px bringen
+    ->addEffect('quadrat_fokus', 'resize', [
+        'width' => 2000,
+        'height' => 2000,
+        'style' => 'maximum',
+        'allow_enlarge' => 'not_enlarge'
+    ], 1)
+    // Dann quadratisch zuschneiden mit Fokuspunkt
+    ->addEffect('quadrat_fokus', 'focuspoint_fit', [
+        'width' => '1fr',     
+        'height' => '1fr',    
+        'zoom' => '0',       
+        'meta' => 'med_focuspoint',
+        'focus' => '50.0,50.0'  // Fallback Fokuspunkt in der Mitte (x,y)
+    ], 2)
+    ->install();
+
+```
+
+
 ### Typen bei Deinstallation behalten
 
 ```php
