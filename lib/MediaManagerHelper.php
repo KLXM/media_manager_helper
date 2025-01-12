@@ -217,10 +217,138 @@ class MediaManagerHelper
     }
 
     /**
-     * Entfernt die Medientypen bei Deinstallation
+     * Media Types aus JSON-Datei importieren
      */
-    public function uninstall(): void 
+    public function importFromJson(string $jsonFile): self
     {
+        if (!file_exists($jsonFile)) {
+            throw new rex_exception('JSON file not found: ' . $jsonFile);
+        }
+
+        $json = file_get_contents($jsonFile);
+        $types = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new rex_exception('Invalid JSON file: ' . json_last_error_msg());
+        }
+
+        foreach ($types as $type) {
+            $this->addType($type['name'], $type['description'] ?? '');
+            
+            if (isset($type['effects'])) {
+                foreach ($type['effects'] as $priority => $effect) {
+                    $this->addEffect(
+                        $type['name'],
+                        $effect['effect'],
+                        $effect['params'][$this->getEffectParamsKey($effect['effect'])] ?? [],
+                        $priority
+                    );
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Exportiere Media Types als JSON
+     * @param array|null $typeNames Welche Typen exportiert werden sollen, null für alle
+     * @param string|null $file Optional: Datei in die exportiert werden soll
+     * @param bool $prettyPrint JSON formatieren
+     * @param bool $includeSystemTypes Auch System-Typen (rex_media_*) exportieren
+     * @return string JSON String
+     */
+    public function exportToJson(
+        ?array $typeNames = null,
+        ?string $file = null,
+        bool $prettyPrint = true,
+        bool $includeSystemTypes = false
+    ): string {
+        $sql = rex_sql::factory();
+        
+        $where = [];
+        $params = [];
+        
+        // System-Typen filtern
+        if (!$includeSystemTypes) {
+            $where[] = 'SUBSTR(name, 1, 10) != "rex_media_"';
+        }
+        
+        // Bestimmte Typen filtern
+        if ($typeNames !== null) {
+            $where[] = 'name IN (:types)';
+            $params['types'] = $typeNames;
+        }
+        
+        // Query bauen
+        $query = 'SELECT id, name, description FROM ' . rex::getTable('media_manager_type');
+        if (!empty($where)) {
+            $query .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $query .= ' ORDER BY name ASC';
+        
+        // Typen holen
+        $types = $sql->getArray($query, $params);
+
+        $export = [];
+        
+        foreach ($types as $type) {
+            $exportType = [
+                'name' => $type['name'],
+                'description' => $type['description'],
+                'effects' => []
+            ];
+
+            // Effekte holen
+            $effects = $sql->getArray('
+                SELECT * FROM ' . rex::getTable('media_manager_type_effect') . '
+                WHERE type_id = :id
+                ORDER BY priority ASC
+            ', ['id' => $type['id']]);
+
+            foreach ($effects as $effect) {
+                $exportType['effects'][$effect['priority']] = [
+                    'effect' => $effect['effect'],
+                    'params' => json_decode($effect['parameters'], true)
+                ];
+            }
+
+            $export[] = $exportType;
+        }
+
+        $flags = $prettyPrint ? JSON_PRETTY_PRINT : 0;
+        $json = json_encode($export, $flags | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        if ($file !== null) {
+            if (!rex_file::put($file, $json)) {
+                throw new rex_exception('Could not write to file: ' . $file);
+            }
+        }
+
+        return $json;
+    }
+
+    /**
+     * Exportiere Media Types in eine Datei
+     * @param string $file Zieldatei
+     * @param array|null $typeNames Welche Typen exportiert werden sollen, null für alle
+     * @param bool $prettyPrint JSON formatieren
+     * @param bool $includeSystemTypes Auch System-Typen (rex_media_*) exportieren
+     * @return bool Erfolgreich gespeichert
+     */
+    public function exportToFile(
+        string $file, 
+        ?array $typeNames = null,
+        bool $prettyPrint = true,
+        bool $includeSystemTypes = false
+    ): bool {
+        try {
+            $this->exportToJson($typeNames, $file, $prettyPrint, $includeSystemTypes);
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
         if (!$this->removeOnUninstall || !rex_addon::get('media_manager')->isAvailable()) {
             return;
         }
