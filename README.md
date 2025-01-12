@@ -59,29 +59,6 @@ $mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
     ->install();
 ```
 
-### Mehrere Effekte kombinieren
-
-```php
-$mm = MediaManagerHelper::factory();
-
-$mm->addType('quadrat_fokus', 'Quadratisches Bild mit Fokuspunkt')
-    // Erst resize
-    ->addEffect('quadrat_fokus', 'resize', [
-        'width' => 2000,
-        'height' => 2000,
-        'style' => 'maximum',
-        'allow_enlarge' => 'not_enlarge'
-    ], 1)
-    // Dann mit Fokuspunkt zuschneiden
-    ->addEffect('quadrat_fokus', 'focuspoint_fit', [
-        'width' => '1fr',     
-        'height' => '1fr',    
-        'zoom' => '0',       
-        'meta' => 'med_focuspoint',
-        'focus' => '50.0,50.0'
-    ], 2)
-    ->install();
-```
 
 ## Import und Export
 
