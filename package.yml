@@ -1,8 +1,8 @@
-package: addon_key
-version: '0.0.0'
-author: 'Friends Of REDAXO'
-supportpage: https://github.com/FriendsOfREDAXO/addon_key
+package: media_manager_helper
+version: '0.0.1-dev'
+author: 'KLXM Crossmedia'
+supportpage: https://github.com/KLXM/media_manager_helper/
 requires:
-    redaxo: '^5.15.1'
+    redaxo: '^5.18.1'
     php:
         version: '>=8.1, <9'
