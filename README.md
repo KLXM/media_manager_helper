@@ -11,6 +11,57 @@ Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddO
 - Import/Export von Medientypen als JSON
 - Automatische Bereinigung bei AddOn-Deinstallation
 
+
+## Warum ein MediaManagerHelper?
+
+### Ohne Helper (Raw SQL)
+```php
+// Media Typ anlegen
+$sql = rex_sql::factory();
+$sql->setTable(rex::getTable('media_manager_type'));
+$sql->setValue('name', 'mein_typ');
+$sql->setValue('description', 'Mein Typ');
+$sql->addGlobalCreateFields();
+$sql->insert();
+
+$typeId = $sql->getLastId();
+
+// Effekt hinzufügen  
+$sql->setTable(rex::getTable('media_manager_type_effect'));
+$sql->setValue('type_id', $typeId); 
+$sql->setValue('effect', 'resize');
+$sql->setValue('parameters', json_encode([
+    'rex_effect_resize' => [
+        'width' => 500,
+        'height' => 500
+    ]
+]));
+$sql->setValue('priority', 1);
+$sql->addGlobalCreateFields();
+$sql->insert();
+```
+
+### Mit Helper
+```php
+$mm = MediaManagerHelper::factory();
+$mm->addType('mein_typ', 'Mein Typ')
+   ->addEffect('mein_typ', 'resize', [
+       'width' => 500, 
+       'height' => 500
+   ])
+   ->install();
+```
+
+## Und das ist noch nicht alles
+
+- Parameter für Effekte anzeigen: `$mm->showEffectParams('resize')`
+- Typen exportieren/importieren: `$mm->exportToJson(['mein_typ'])`
+- Automatische Validierung aller Parameter
+- Automatisches Update bestehender Typen
+
+Der Helper macht's einfach, sicher und wartbar. 🚀
+
+
 ## Einfache Verwendung
 
 ### In der install.php des eigenen AddOns
