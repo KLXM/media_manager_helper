@@ -346,6 +346,7 @@ $mm->addEffectToTypes('*', 'resize', [
     'height' => 2000,
     'style' => 'maximum'
 ]);
+```
 
 ## Fehlerbehandlung
 
