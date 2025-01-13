@@ -58,6 +58,7 @@ $mm->addType('mein_typ', 'Mein Typ')
 - Typen exportieren/importieren: `$mm->exportToJson(['mein_typ'])`
 - Automatische Validierung aller Parameter
 - Automatisches Update bestehender Typen
+- Mehrern Typen oder allen einen Effekt hinzufügen am Anfang oder am Ende
 
 Der Helper macht's einfach, sicher und wartbar. 🚀
 
@@ -313,6 +314,39 @@ $mm->addType('watermark', 'Bild mit Wasserzeichen')
    ], 2);
 ```
 
+### Effekte mehreren Typen zuweisen
+
+```php
+/**
+ * Fügt mehreren Typen einen Effekt hinzu
+ * @param string|array $types Pattern (z.B. "team_*") oder Array von Typnamen
+ * @param string $effect Name des Effekts
+ * @param array $params Effekt-Parameter
+ * @param string $position 'append' oder 'prepend'
+ */
+$mm = MediaManagerHelper::factory();
+
+// Allen Team-Typen einen Wasserzeichen-Effekt hinzufügen
+$mm->addEffectToTypes('team_*', 'insert_image', [
+    'brandimage' => 'logo.png',
+    'hpos' => 'center'
+], 'append');
+
+// Mehreren Typen einen Resize voranstellen
+$mm->addEffectToTypes(
+    ['type1', 'type2'], 
+    'resize',
+    ['width' => 2000],
+    'prepend'
+);
+
+// Allen vorhandenen Typen einen Effekt anfügen
+$mm->addEffectToTypes('*', 'resize', [
+    'width' => 2000,
+    'height' => 2000,
+    'style' => 'maximum'
+]);
+
 ## Fehlerbehandlung
 
 Die Klasse prüft automatisch:
@@ -362,6 +396,17 @@ $mm->addEffect('mein_typ', 'resize', [
     'width' => 500,
     'height' => 500
 ]);
+```
+
+Fügt mehreren Typen einen Effekt hinzu. `position` bestimmt, ob der Effekt am Anfang (prepend) oder Ende (append) der Effektkette eingefügt wird.
+
+```php 
+public function addEffectToTypes(
+    $types,           // Pattern (z.B. "team_*") oder Array von Typnamen 
+    string $effect,   // Name des Effekts
+    array $params = [], // Effekt-Parameter
+    string $position = 'append' // 'append' oder 'prepend'
+): self
 ```
 
 ```php
