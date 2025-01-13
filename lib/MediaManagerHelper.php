@@ -63,6 +63,7 @@ class MediaManagerHelper
 
         return $effects;
     }
+
     private array $types = [];
     private bool $removeOnUninstall = true;
 
@@ -116,6 +117,58 @@ class MediaManagerHelper
             'params' => [$effectKey => $parameters]
         ];
 
+        return $this;
+    }
+
+    /**
+     * Fügt mehreren Typen einen Effekt hinzu
+     * @param string|array $types Pattern (z.B. "team_*") oder Array von Typnamen
+     * @param string $effect Name des Effekts
+     * @param array $params Effekt-Parameter
+     * @param string $position 'append' oder 'prepend'
+     */
+    public function addEffectToTypes($types, string $effect, array $params = [], string $position = 'append'): self
+    {
+        // Wenn Pattern, dann passende Typen finden
+        if (is_string($types) && str_ends_with($types, '*')) {
+            $pattern = str_replace('*', '', $types);
+            $sql = rex_sql::factory();
+            $types = $sql->getArray('SELECT name FROM '.rex::getTable('media_manager_type').' WHERE name LIKE :pattern', [
+                'pattern' => $pattern.'%'
+            ]);
+            $types = array_column($types, 'name');
+        }
+        
+        // Effekt zu allen Typen hinzufügen
+        foreach ($types as $type) {
+            // Aktuelle Prioritäten laden
+            $sql = rex_sql::factory();
+            $priorities = $sql->getArray('
+                SELECT priority 
+                FROM '.rex::getTable('media_manager_type_effect').' 
+                WHERE type_id = (SELECT id FROM '.rex::getTable('media_manager_type').' WHERE name = :name)
+                ORDER BY priority', 
+                ['name' => $type]
+            );
+            
+            $priority = match($position) {
+                'prepend' => 1,
+                'append' => count($priorities) + 1,
+            };
+            
+            // Bei prepend alle anderen Prioritäten um 1 erhöhen
+            if ($position === 'prepend' && !empty($priorities)) {
+                $sql->setQuery('
+                    UPDATE '.rex::getTable('media_manager_type_effect').'
+                    SET priority = priority + 1
+                    WHERE type_id = (SELECT id FROM '.rex::getTable('media_manager_type').' WHERE name = :name)',
+                    ['name' => $type]
+                );
+            }
+            
+            $this->addEffect($type, $effect, $params, $priority);
+        }
+        
         return $this;
     }
 
@@ -349,6 +402,12 @@ class MediaManagerHelper
             return false;
         }
     }
+
+    /**
+     * Deinstalliert die angegebenen Typen
+     */
+    public function uninstall(): void 
+    {
         if (!$this->removeOnUninstall || !rex_addon::get('media_manager')->isAvailable()) {
             return;
         }
@@ -362,7 +421,14 @@ class MediaManagerHelper
                 $sql->setQuery('DELETE FROM ' . rex::getTable('media_manager_type') . ' WHERE id = ?', [$typeId]);
             }
         }
-
         rex_media_manager::deleteCache();
-    }
+   }
+
+   /**
+    * Hilfsmethode für Effekt-Parameter-Key
+    */
+   private function getEffectParamsKey(string $effect): string
+   {
+       return 'rex_effect_' . $effect;
+   }
 }
