@@ -13,7 +13,7 @@ Ein neuer Media Typ kann im Backend angelegt, die Effekte dort konfiguriert und 
 ```php
 // Hole Parameter von einem existierenden Typ
 $json = rex_media_manager_type::exportToJson(['mein_typ']);
-rex_var_dumper::dump(json_decode($json, true));
+dump(json_decode($json, true));
 ```
 
 ### 2. Parameter eines bestimmten Effekts anzeigen
