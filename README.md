@@ -1,6 +1,6 @@
 # MediaManagerHelper
 
-Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddOns zu verwalten.
+Eine Hilfsklasse für REDAXO, um Media Manager Typen und Effekte einfach in AddOns zu verwalten und ein Srcset-Effekt.
 
 ## Features
 
