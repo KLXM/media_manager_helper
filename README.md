@@ -504,7 +504,243 @@ Format für Import/Export:
     }
 ]
 ```
+## SRCSET Helper Effekt
 
+Der SRCSET Helper Effekt ermöglicht es, responsive Bilder mit unterschiedlichen Größen für verschiedene Bildschirmauflösungen anzubieten. Das Add-on bietet auch Art Direction-Unterstützung, um verschiedene Bildausschnitte für verschiedene Geräte zu definieren.
+
+### Verwendung im Media Manager
+
+1. Erstelle einen Media Manager Typ für dein Bild
+2. Füge zuerst einen Resize- oder Crop-Effekt hinzu
+3. Füge dann den "SRCSET Helper" Effekt hinzu
+4. Konfiguriere das SRCSET-Attribut, z.B. `480 480w, 768 768w, 1024 1024w, 1600 1600w`
+
+### Verwendung im Template
+
+Zuerst die Klasse einbinden:
+
+```php
+use KLXM\MediaManagerHelper\ResponsiveImage;
+```
+
+Dann die Methoden verwenden:
+
+```php
+// Einfaches responsives Bild
+echo ResponsiveImage::getImageByType('bild.jpg', 'mein_typ', [
+    'alt' => 'Beschreibung',
+    'class' => 'responsive-img'
+]);
+
+// Mit Art Direction (unterschiedliche Typen für Desktop und Mobile)
+echo ResponsiveImage::getPictureTag(
+    'bild.jpg',
+    'desktop_typ',
+    [
+        '(max-width: 768px)' => 'mobile_typ'
+    ],
+    [
+        'alt' => 'Beschreibung'
+    ]
+);
+
+// Mit erweiterten Optionen (unterschiedliche Bilder und Größen)
+echo ResponsiveImage::getPictureTag(
+    'desktop-bild.jpg',
+    'desktop_typ',
+    [
+        [
+            'media' => '(max-width: 768px)',
+            'file' => 'mobiles-bild.jpg',
+            'type' => 'mobile_typ',
+            'sizes' => '100vw'
+        ]
+    ],
+    [
+        'alt' => 'Beschreibung'
+    ]
+);
+```
+
+### Praktische Anwendungsbeispiele
+
+#### Beispiel 1: Responsive Artikel-Bilder
+
+```php
+// Im Template für Artikel-Detailansichten
+echo ResponsiveImage::getImageByType($article->getImage(), 'article_image', [
+    'alt' => $article->getTitle(),
+    'class' => 'article-image'
+]);
+```
+
+#### Beispiel 2: Responsive Cards in unterschiedlichen Breiten
+
+```php
+// Für ein Kartenraster mit unterschiedlichen Kartengrößen
+$cardType = '';
+
+// Container-Klasse bestimmt den passenden Typ
+if (strpos($container_class, 'uk-width-1-1') !== false) {
+    $cardType = 'card_full';
+} elseif (strpos($container_class, 'uk-width-1-2') !== false) {
+    $cardType = 'card_half';
+} elseif (strpos($container_class, 'uk-width-1-3') !== false) {
+    $cardType = 'card_third';
+}
+
+echo ResponsiveImage::getImageByType($card->getImage(), $cardType, [
+    'alt' => $card->getTitle(),
+    'class' => 'card-image'
+]);
+```
+
+#### Beispiel 3: Art Direction für Headerbild
+
+```php
+// Header-Bild mit unterschiedlichen Zuschnitten für verschiedene Geräte
+echo ResponsiveImage::getPictureTag(
+    'header.jpg',
+    'header_desktop',
+    [
+        // Smartphone (Portrait)
+        '(max-width: 576px)' => 'header_mobile_portrait',
+        // Tablet (Landscape)
+        '(max-width: 992px)' => 'header_tablet_landscape'
+    ],
+    [
+        'alt' => 'Website Header',
+        'class' => 'header-image'
+    ]
+);
+```
+
+#### Beispiel 4: Unterschiedliche Produktbilder für Desktop und Mobile
+
+```php
+// Zeige auf mobilen Geräten ein anderes Produktbild
+echo ResponsiveImage::getPictureTag(
+    $product->getDesktopImage(),
+    'product_desktop',
+    [
+        [
+            'media' => '(max-width: 768px)',
+            'file' => $product->getMobileImage(),
+            'type' => 'product_mobile',
+            'sizes' => '100vw'
+        ]
+    ],
+    [
+        'alt' => $product->getName(),
+        'class' => 'product-image'
+    ]
+);
+```
+
+### Tipps und Best Practices
+
+#### Medientypen für verschiedene Anwendungsfälle erstellen
+
+Für optimale Ergebnisse empfehlen wir, spezifische Medientypen für verschiedene Anwendungsfälle zu erstellen:
+
+- **card_full** - für Container mit voller Breite
+- **card_half** - für Container mit halber Breite
+- **card_third** - für Container mit einem Drittel Breite
+- **card_mobile_portrait** - für Mobil-Ansicht im Portrait-Format
+- **card_desktop_landscape** - für Desktop-Ansicht im Landscape-Format
+
+#### SVG und andere nicht-pixelbasierte Formate
+
+Bei SVG und anderen nicht-pixelbasierten Formaten (PDF, EPS) wird das Bild immer direkt ohne SRCSET-Attribute ausgegeben, um Kompatibilitätsprobleme zu vermeiden.
+
+#### Effektive Media Manager Typen konfigurieren
+
+1. Erstelle einen Basistyp mit allgemeinen Einstellungen (z.B. Wasserzeichen oder Schärfen)
+2. Erstelle davon abgeleitete Typen für verschiedene Anwendungsfälle
+3. Füge den SRCSET-Helper Effekt hinzu und konfiguriere passende Bildgrößen:
+   - Für volle Breite: `480 480w, 800 800w, 1200 1200w, 1920 1920w`
+   - Für halbe Breite: `360 360w, 720 720w, 900 900w`
+   - Für Drittel-Breite: `300 300w, 600 600w, 800 800w`
+
+#### Optimale SRCSET-Konfiguration
+
+- Wähle eine gute Bandbreite an Bildgrößen, um verschiedene Geräte und Auflösungen abzudecken
+- Verwende den 2x Modifikator für Retina-Displays wo sinnvoll
+- Vermeide zu viele Bildgrößen, da dies die Ladezeit und den Cache-Speicher beeinträchtigen kann
+
+### Dynamische Bildanpassung mit JavaScript
+
+Das SRCSET Attribut kann auch als data-srcset Attribut eingebunden werden. Dann lädt der Browser zunächst das Standardbild (im SRC-Attribut). Das JavaScript für dynamische Anpassung wird automatisch eingebunden, wenn ein data-srcset Attribut erkannt wird.
+
+#### Beispiel:
+
+```html
+<img width="500" src="index.php?rex_media_type=ImgTypeName&rex_media_file=ImageFileName"
+    data-srcset="index.php?rex_media_type=ImgTypeName__400&rex_media_file=ImageFileName 480w,
+                 index.php?rex_media_type=ImgTypeName__700&rex_media_file=ImageFileName 768w,
+                 index.php?rex_media_type=ImgTypeName__800&rex_media_file=ImageFileName 960w">
+```
+
+#### Manuelle JavaScript-Aktualisierung
+
+Du kannst die Bildgrößen nach DOM-Änderungen manuell aktualisieren:
+
+```javascript
+// Nach dynamischen DOM-Änderungen
+if (typeof window.klxmMediaSrcsetProcess === 'function') {
+    window.klxmMediaSrcsetProcess();
+}
+```
+
+### FAQ
+
+#### Warum werden meine SVG-Dateien nicht mit dem SRCSET-Attribut versehen?
+
+SVG-Dateien sind vektorbasiert und skalieren ohne Qualitätsverlust. Daher werden sie absichtlich ohne SRCSET-Attribut ausgegeben, um Kompatibilitätsprobleme zu vermeiden.
+
+#### Kann ich unterschiedliche Bilder für Portrait- und Landscape-Orientierung verwenden?
+
+Ja, mit der erweiterten `getPictureTag()`-Methode kannst du komplett unterschiedliche Bilder für verschiedene Viewports definieren. Siehe Beispiel 3 in der Dokumentation.
+
+#### Wie kann ich das SRCSET-Attribut in einem REDAXO-Modul verwenden?
+
+Du kannst die Methoden `getImageByType()` oder `getPictureTag()` in deinem Modul-Output verwenden. Beispiel:
+
+```php
+// Im Modul-Output
+use KLXM\MediaManagerHelper\ResponsiveImage;
+
+$output = '<div class="my-module">';
+$output .= ResponsiveImage::getImageByType($media->getImage(), 'my_module_type', [
+    'alt' => $media->getTitle(),
+    'class' => 'module-image'
+]);
+$output .= '</div>';
+
+return $output;
+```
+
+#### Wie kann ich eigene responsive Typen mit dem MediaManagerHelper anlegen?
+
+Du kannst den MediaManagerHelper verwenden, um eigene responsive Typen anzulegen:
+
+```php
+// In einer Installationsroutine
+$mmHelper = MediaManagerHelper::factory();
+
+$mmHelper
+    ->addType('card_full', 'Vollbreite responsive Bilder (100%)')
+    ->addEffect('card_full', 'resize', [
+        'width' => 1920, 
+        'height' => '', 
+        'style' => 'maximum',
+        'allow_enlarge' => 'not_enlarge'
+    ], 1)
+    ->addEffect('card_full', 'srcset_helper', [
+        'srcset' => '480 480w, 768 768w, 1024 1024w, 1366 1366w, 1920 1920w'
+    ], 2)
+    ->install();
+```
 
 ## Lizenz
 
